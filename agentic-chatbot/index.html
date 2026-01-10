@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agentic AI Chatbot</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 700px; margin: auto; }
+    h2 { margin-bottom: 5px; }
+    .status span { margin-right: 15px; }
+    .ok { color: green; }
+    .fail { color: red; }
+    input { width: 75%; padding: 8px; }
+    button { padding: 8px 12px; margin-left: 5px; }
+    #reply { margin-top: 15px; padding: 10px; border-left: 4px solid #333; }
+    .demo button { margin: 5px 5px 5px 0; }
+  </style>
+</head>
+<body>
+
+<h2>🤖 Agentic AI Chatbot</h2>
+<p class="status">
+  <span>DB: <b id="db">Checking...</b></span>
+  <span>Gemini: <b id="ai">Checking...</b></span>
+</p>
+
+<div class="demo">
+  <b>Demo Queries:</b><br/>
+</div>
+
+<hr/>
+
+<input id="msg" placeholder="Ask your question..." />
+<button onclick="send()">Send</button>
+
+<div id="reply"></div>
+
+<script>
+const API = "https://congenial-lamp-5000.app.github.dev";
+ // same origin (Codespaces forwarded port)
+
+async function loadHealth() {
+  const res = await fetch(API + "/health");
+  const data = await res.json();
+
+  document.getElementById("db").innerHTML =
+    data.database ? "<span class='ok'>Connected</span>" : "<span class='fail'>Demo Mode</span>";
+
+  document.getElementById("ai").innerHTML =
+    data.gemini ? "<span class='ok'>Active</span>" : "<span class='fail'>Basic Mode</span>";
+}
+
+async function loadDemoQueries() {
+  const res = await fetch(API + "/demo");
+  const data = await res.json();
+
+  const container = document.querySelector(".demo");
+  data.demo_queries.forEach(q => {
+    const btn = document.createElement("button");
+    btn.innerText = q;
+    btn.onclick = () => {
+      document.getElementById("msg").value = q;
+    };
+    container.appendChild(btn);
+  });
+}
+
+async function send() {
+  const msg = document.getElementById("msg").value;
+  if (!msg) return;
+
+  document.getElementById("reply").innerHTML = "⏳ Processing...";
+
+  const res = await fetch(API + "/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: msg })
+  });
+
+  const data = await res.json();
+
+  document.getElementById("reply").innerHTML = `
+    <b>Response:</b><br/>
+    ${data.response}<br/><br/>
+    <small>
+      Session: ${data.session_id}<br/>
+      DB: ${data.system_info.database} |
+      AI: ${data.system_info.ai}
+    </small>
+  `;
+}
+
+loadHealth();
+loadDemoQueries();
+</script>
+
+</body>
+</html>
